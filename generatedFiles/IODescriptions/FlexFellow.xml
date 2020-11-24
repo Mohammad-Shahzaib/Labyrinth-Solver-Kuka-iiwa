@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Automatically generated IO group description. Please do NOT modify!
+-->
+<SunriseIOGroupDescription xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="1.0.0">
+  <IOGroup DisplayName="FlexFellow" IconName="FlexFellow" SignalTypes="InOut" TemplateName="FlexFellow">
+    <IOs>
+      <DigitalIOItem Name="DoorClosed" DataType="BOOL" IOType="Input" UsedBitWidth="1" IsConnected="true">
+        <Description>Indicates whether the side door of the flexFELLOW is closed (TRUE) or opened (FALSE).</Description>
+      </DigitalIOItem>
+      <DigitalIOItem Name="RedLight" DataType="BOOL" IOType="Output" UsedBitWidth="1" IsConnected="true">
+        <Description>Enables the RED signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+      </DigitalIOItem>
+      <DigitalIOItem Name="YellowLight" DataType="BOOL" IOType="Output" UsedBitWidth="1" IsConnected="true">
+        <Description>Enables the YELLOW signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+      </DigitalIOItem>
+      <DigitalIOItem Name="GreenLight" DataType="BOOL" IOType="Output" UsedBitWidth="1" IsConnected="true">
+        <Description>Enables the GREEN signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+      </DigitalIOItem>
+      <DigitalIOItem Name="BlueLight" DataType="BOOL" IOType="Output" UsedBitWidth="1" IsConnected="true">
+        <Description>Enables the BLUE signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+      </DigitalIOItem>
+      <DigitalIOItem Name="Buzzer" DataType="BOOL" IOType="Output" UsedBitWidth="1" IsConnected="true">
+        <Description>Enables the buzzer (acoustic signal). TRUE -&gt; buzzer is powered, FALSE -&gt; buzzer is unpowered.</Description>
+      </DigitalIOItem>
+    </IOs>
+    <Description>This IO group contains all input and output signals which are provided by the flexFELLOW chosen in the StationSetup of the Sunrise-Project.</Description>
+  </IOGroup>
+</SunriseIOGroupDescription>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<IOManager xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Version Label="">
+    <Info Version="IOManager V0.1.0" />
+    <Schema Version="1" />
+  </Version>
+  <WarnMultipleUsageOfInputs printWarning="false" />
+  <BusList>
+    <Bus BusDriverName="ECatIODriver" BusInstanceName="SYS-X48">
+      <IOList>
+        <DigitalIO Name="MediaFlange.InputX3Pin3" Type="INPUT" Scope="USER_IO" StartBit="547" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.InputX3Pin4" Type="INPUT" Scope="USER_IO" StartBit="548" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.InputX3Pin10" Type="INPUT" Scope="USER_IO" StartBit="544" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.InputX3Pin13" Type="INPUT" Scope="USER_IO" StartBit="546" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.InputX3Pin16" Type="INPUT" Scope="USER_IO" StartBit="545" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.LEDBlue" Type="OUTPUT" Scope="USER_IO" StartBit="12922" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.OutputX3Pin1" Type="OUTPUT" Scope="USER_IO" StartBit="12912" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.OutputX3Pin2" Type="OUTPUT" Scope="USER_IO" StartBit="12915" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.OutputX3Pin11" Type="OUTPUT" Scope="USER_IO" StartBit="12913" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.OutputX3Pin12" Type="OUTPUT" Scope="USER_IO" StartBit="12914" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.SwitchOffX3Voltage" Type="OUTPUT" Scope="USER_IO" StartBit="12926" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="MediaFlange.UserButton" Type="INPUT" Scope="USER_IO" StartBit="549" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+      </IOList>
+    </Bus>
+    <Bus BusDriverName="ECatIODriver" BusInstanceName="SYS-X44">
+      <IOList>
+        <DigitalIO Name="FlexFellow.DoorClosed" Type="INPUT" Scope="USER_IO" StartBit="326" BitSize="1" Signed="false">
+          <Description>Indicates whether the side door of the flexFELLOW is closed (TRUE) or opened (FALSE).</Description>
+        </DigitalIO>
+        <DigitalIO Name="FlexFellow.RedLight" Type="OUTPUT" Scope="USER_IO" StartBit="12584" BitSize="1" Signed="false">
+          <Description>Enables the RED signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+        </DigitalIO>
+        <DigitalIO Name="FlexFellow.YellowLight" Type="OUTPUT" Scope="USER_IO" StartBit="12585" BitSize="1" Signed="false">
+          <Description>Enables the YELLOW signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+        </DigitalIO>
+        <DigitalIO Name="FlexFellow.GreenLight" Type="OUTPUT" Scope="USER_IO" StartBit="12586" BitSize="1" Signed="false">
+          <Description>Enables the GREEN signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+        </DigitalIO>
+        <DigitalIO Name="FlexFellow.BlueLight" Type="OUTPUT" Scope="USER_IO" StartBit="12587" BitSize="1" Signed="false">
+          <Description>Enables the BLUE signal light. TRUE -&gt; light is powered, FALSE -&gt; light is unpowered.</Description>
+        </DigitalIO>
+        <DigitalIO Name="FlexFellow.Buzzer" Type="OUTPUT" Scope="USER_IO" StartBit="12588" BitSize="1" Signed="false">
+          <Description>Enables the buzzer (acoustic signal). TRUE -&gt; buzzer is powered, FALSE -&gt; buzzer is unpowered.</Description>
+        </DigitalIO>
+        <DigitalIO Name="EL2809.OutPut1" Type="OUTPUT" Scope="USER_IO" StartBit="12576" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+        <DigitalIO Name="EL2809.OutPut2" Type="OUTPUT" Scope="USER_IO" StartBit="12577" BitSize="1" Signed="false">
+          <Description />
+        </DigitalIO>
+      </IOList>
+    </Bus>
+  </BusList>
+</IOManager>
