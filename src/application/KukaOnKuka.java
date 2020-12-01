@@ -15,9 +15,13 @@ import static com.kuka.roboticsAPI.motionModel.BasicMotions.*;
 
 import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.geometricModel.CartDOF;
+import com.kuka.roboticsAPI.geometricModel.math.Transformation;
+import com.kuka.roboticsAPI.geometricModel.math.Vector;
 import com.kuka.roboticsAPI.motionModel.IMotionContainer;
 import com.kuka.roboticsAPI.motionModel.controlModeModel.CartesianSineImpedanceControlMode;
 import com.kuka.roboticsAPI.persistenceModel.processDataModel.IProcessData;
+import com.kuka.roboticsAPI.sensorModel.ForceSensorData;
+import com.kuka.roboticsAPI.sensorModel.TorqueSensorData;
 import com.kuka.generated.flexfellow.FlexFellow;
 import com.kuka.generated.ioAccess.MediaFlangeIOGroup;
 
@@ -49,8 +53,15 @@ public class KukaOnKuka extends RoboticsAPIApplication {
 	@Inject
 	private MediaFlangeIOGroup mediaFlange;
 	
-    private static double joggingVelocity = 0.05; // moving velocity
-    // Recommended velocity for labyrinth solving: 0.01
+    private static double JOGGING_VELOCITY = 0.1; // moving velocity
+    // Recommended velocity for labyrinth solving: TBD
+    
+    private static double CARTESIAN_JERK = 500;
+    // Recommended jerk 50
+
+    private static double FORCE_STOP_THRESHOLD = 4;
+    
+    private static double MOVEMENT_STEP = 3;
     
 	@Override
 	public void initialize() {
@@ -60,83 +71,76 @@ public class KukaOnKuka extends RoboticsAPIApplication {
 
 	@Override
 	public void run() {
+        mediaFlange.setLEDBlue(false);
 		// your application execution starts here
-        double UPPER_JOINT_LIMIT = 1.7;
-        double LOWER_JOINT_LIMIT = -1.7;
-        double STEP = 0.25;
         int i = 0;
-        double arr[] = new double[] { Math.toRadians(-19.42), 
-        								Math.toRadians(-33.65),
-        								Math.toRadians(18.35),
-        								Math.toRadians(117.39),
-        								Math.toRadians(-16),
-        								Math.toRadians(-30.69),
-        								Math.toRadians(8.09) };
-        boolean dir[] = new boolean[] {true, false, true, true, false, true, true};
-        int multiplier = 1;
-        boolean isFlangeOpen = false;
+        double arr[] = new double[] { Math.toRadians(-17.55), 
+        								Math.toRadians(-57.36),
+        								Math.toRadians(7.7),
+        								Math.toRadians(73.49),
+        								Math.toRadians(-8.85),
+        								Math.toRadians(-50.97),
+        								Math.toRadians(-7.22) };
+        boolean stopRobot = false;
         gripper.attachTo(iiwa.getFlange());
     	gripper.close_M();
-        
-        // move to home position
-        getLogger().info("Moving to home position");
-        iiwa.move(ptpHome().setJointVelocityRel(joggingVelocity));
+//         move to home position
+//        getLogger().info("Moving to home position");
+//        iiwa.move(ptpHome().setJointVelocityRel(joggingVelocity));
+        getLogger().info("Moving to operation postion");
         iiwa.move(ptp((Double) Array.get(arr,0),
         			(Double) Array.get(arr,1),
         			(Double) Array.get(arr,2),
         			(Double) Array.get(arr,3),
         			(Double) Array.get(arr,4),
         			(Double) Array.get(arr,5),
-        			(Double) Array.get(arr,6)).setJointVelocityRel(joggingVelocity));
-        iiwa.move(ptpHome().setJointVelocityRel(joggingVelocity));
+        			(Double) Array.get(arr,6)).setJointVelocityRel(JOGGING_VELOCITY));
+//        iiwa.move(ptpHome().setJointVelocityRel(JOGGING_VELOCITY));
         mediaFlange.setLEDBlue(true);
-        Arrays.fill(arr, 0.0);
         while ( true ){
 
         	// Open close flange
-            if(isFlangeOpen){
-            	gripper.close_M();
-            	isFlangeOpen = false;
-            } else {
-            	gripper.open_M();
-            	isFlangeOpen = true;
-            }
-            
-            // Calculate joint values
-        	for(i = 0; i < 7; i++){
-	        	if( (Boolean) Array.get(dir, i) ){
-	        		multiplier = 1;
-	        	}
-	        	else {
-	        		multiplier = -1;
-	        	}
-	        	Array.set(arr, i, (Double) Array.get(arr,i) + (multiplier * STEP) );
-	 
-	        	if((Double) Array.get(arr,i) > UPPER_JOINT_LIMIT){
-	        		Array.set(dir, i, false);
-	        	}
-	        	else if((Double) Array.get(arr,i) < LOWER_JOINT_LIMIT){
-	        		Array.set(dir, i, true);
-	        	}
+//            if(isFlangeOpen){
+//            	gripper.close_M();
+//            	isFlangeOpen = false;
+//            } else {
+//            	gripper.open_M();
+//            	isFlangeOpen = true;
+//            }
+        	while(iiwa.hasActiveMotionCommand()){
+        		getLogger().info("Motion in progress");
+            	try {
+    				TimeUnit.MILLISECONDS.sleep(500);
+    			} catch (InterruptedException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
         	}
-        	
-        	// Set joint values and move
-            String toLog = "Moving to: " + 
-            		String.valueOf((Double) Array.get(arr,0)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,1)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,2)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,3)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,4)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,5)) + ", " + 
-            		String.valueOf((Double) Array.get(arr,6));
-            getLogger().info(toLog);
-            iiwa.move(ptp((Double) Array.get(arr,0),
-            			(Double) Array.get(arr,1),
-            			(Double) Array.get(arr,2),
-            			(Double) Array.get(arr,3),
-            			(Double) Array.get(arr,4),
-            			(Double) Array.get(arr,5),
-            			(Double) Array.get(arr,6)).setJointVelocityRel(joggingVelocity));
+        	String logTorque = "";
+            ForceSensorData externalData = iiwa.getExternalForceTorque(iiwa.getFlange());
+            Vector val = externalData.getForce();
+            int len = (int) val.length();
+            getLogger().info( String.valueOf((int) len) );
+            for(i = 0; i < 3; i++){
+            	logTorque += String.format("%.2f, ", val.get(i));
+            }
+            for(i = 0; i < 3; i++){
+            	if(val.get(i) > FORCE_STOP_THRESHOLD || val.get(i) < -FORCE_STOP_THRESHOLD){
+            		stopRobot = true;
+            	}
+            }
+            getLogger().info(logTorque);
+            iiwa.isReadyToMove();
+            if(stopRobot){
+                getLogger().info("External force detected, Stopping!");
+                mediaFlange.setLEDBlue(false);
+                System.exit(0);
+                return;
+            }
+            iiwa.move(linRel().setXOffset(-MOVEMENT_STEP).setJointVelocityRel(JOGGING_VELOCITY).setCartJerk(CARTESIAN_JERK));
+            iiwa.moveAsync(linRel().setYOffset(-MOVEMENT_STEP).setJointVelocityRel(JOGGING_VELOCITY).setCartJerk(CARTESIAN_JERK));
+//            iiwa.moveAsync(linRel().setYOffset(-20));
+            // Y initial -1083.19, Y final -1077.93
         }
 	}
 	
