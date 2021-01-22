@@ -45,6 +45,14 @@ import com.kuka.generated.ioAccess.MediaFlangeIOGroup;
  * @see #run()
  * @see #dispose()
  */
+
+enum MovementDirection {
+	  NORTH, // x = -1
+	  EAST,  // y = -1
+	  SOUTH, // x = 1
+	  WEST   // y = 1
+}
+
 public class KukaOnKuka extends RoboticsAPIApplication {
 	@Inject
 	private LBR iiwa;
@@ -57,11 +65,15 @@ public class KukaOnKuka extends RoboticsAPIApplication {
 	
     private static double JOGGING_VELOCITY = 0.1; // moving velocity
     
-    private static int FORCE_STOP_THRESHOLD = 4;
+    private static int FORCE_STOP_THRESHOLD = 5;
     
     private static int DIRECTION_DEBOUNCE_COUNT_THRESHOLD = 3;
     
-    private int yDirection, directionChangeDebounceCount;
+    private static double REBOUND_DISTANCE = -2.5;
+    
+    private int moveDirection, directionChangeDebounceCount, fsmIndex;
+    
+    private MovementDirection[] movementDirectionArr;
     
 	@Override
 	public void initialize() {
@@ -70,15 +82,21 @@ public class KukaOnKuka extends RoboticsAPIApplication {
 	}
 	
 	public void initSetup(){
-        double homePositionWithTool[] = new double[] { Math.toRadians(5.17), 
-				Math.toRadians(-51.81),
-				Math.toRadians(-9.72),
-				Math.toRadians(78.27),
-				Math.toRadians(10.14),
-				Math.toRadians(-51.51),
-				Math.toRadians(-6.96) };
-        yDirection = -1;
+		movementDirectionArr = new MovementDirection[]{MovementDirection.EAST, 
+														MovementDirection.NORTH, 
+														MovementDirection.EAST, 
+														MovementDirection.SOUTH, 
+														MovementDirection.EAST};
+        double homePositionWithTool[] = new double[] { Math.toRadians(-44.86), 
+				Math.toRadians(-99.52),
+				Math.toRadians(101.10),
+				Math.toRadians(75.53),
+				Math.toRadians(-100.29),
+				Math.toRadians(-98.53),
+				Math.toRadians(28.90) };
         directionChangeDebounceCount = 0;
+        fsmIndex = 0;
+        moveDirection = -1;
         mediaFlange.setLEDBlue(false);
         gripper.attachTo(iiwa.getFlange());
     	gripper.close_M();
@@ -93,7 +111,7 @@ public class KukaOnKuka extends RoboticsAPIApplication {
         			(Double) Array.get(homePositionWithTool,6)).setJointVelocityRel(JOGGING_VELOCITY));
         mediaFlange.setLEDBlue(true);
 	}
-	
+
 	// Returns true if force is detected during motion above provided threshold
 	public boolean forceControlCheck(int forceThreshold){
     	while(iiwa.hasActiveMotionCommand()){
@@ -122,23 +140,85 @@ public class KukaOnKuka extends RoboticsAPIApplication {
     	}
     	return false;
 	}
+
+	// Returns true if force is detected during motion above provided threshold
+	public boolean singleDimensionalForceControlCheck(int forceThreshold, int dimension){
+    	while(iiwa.hasActiveMotionCommand()){
+        	String logTorque = "";
+            ForceSensorData externalData = iiwa.getExternalForceTorque(iiwa.getFlange());
+            Vector val = externalData.getForce();
+            for(int i = 0; i < 3; i++){
+            	logTorque += String.format("%.2f, ", val.get(i));
+            }
+            if ((val.get(dimension) > forceThreshold
+        			|| val.get(dimension) < -forceThreshold)
+        			&& directionChangeDebounceCount > DIRECTION_DEBOUNCE_COUNT_THRESHOLD){
+                getLogger().info("Force detected on " + dimension);
+                iiwa.getController().getExecutionService().cancelAll();
+            	return true;
+        	}
+        	directionChangeDebounceCount += 1;
+            getLogger().info(logTorque);
+        	try {
+				TimeUnit.MILLISECONDS.sleep(250);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    	}
+    	return false;
+	}
 	
-	public void moveRobotAsync(boolean changeDirection){
-        if(changeDirection){
-        	changeDirection = false;
-            getLogger().info("Changing direction! yDir=" + yDirection);
-            yDirection *= -1;
+	public void moveRobotAsync(boolean changeState, boolean rebound){
+
+        if(rebound){ // Rebound if need to
+            if(movementDirectionArr[fsmIndex] == MovementDirection.NORTH || 
+            		movementDirectionArr[fsmIndex] == MovementDirection.SOUTH){
+                iiwa.moveAsync(linRel().setXOffset(moveDirection * REBOUND_DISTANCE)); // Watch out the speed if you increase the movement step
+            }
+            else if(movementDirectionArr[fsmIndex] == MovementDirection.EAST || 
+            		movementDirectionArr[fsmIndex] == MovementDirection.WEST){
+                iiwa.moveAsync(linRel().setYOffset(moveDirection * REBOUND_DISTANCE)); // Watch out the speed if you increase the movement step
+            }
+        }
+		
+        if(changeState){ // transit to next FSM state
+            getLogger().info("Changing direction!");
+            fsmIndex = fsmIndex + 1;
+            if( movementDirectionArr[fsmIndex] == MovementDirection.NORTH || 
+            		movementDirectionArr[fsmIndex] == MovementDirection.EAST){
+                moveDirection = -1;
+            }
+            else{
+            	moveDirection = 1;
+            }
         	directionChangeDebounceCount = 0;
         }
-        iiwa.moveAsync(linRel().setYOffset(yDirection * 1)); // Watch out the speed if you increase the movement step
+        
+        // Normal movement according to current FSM state
+        if(movementDirectionArr[fsmIndex] == MovementDirection.NORTH || 
+        		movementDirectionArr[fsmIndex] == MovementDirection.SOUTH){
+            iiwa.moveAsync(linRel().setXOffset(moveDirection * 1)); // Watch out the speed if you increase the movement step
+        }
+        else if(movementDirectionArr[fsmIndex] == MovementDirection.EAST || 
+        		movementDirectionArr[fsmIndex] == MovementDirection.WEST){
+            iiwa.moveAsync(linRel().setYOffset(moveDirection * 1)); // Watch out the speed if you increase the movement step
+        }
 	}
 
 	@Override
 	public void run() {
 		initSetup();
+		int i = 0;
         while (true) {
-        	boolean changeDirection = forceControlCheck(FORCE_STOP_THRESHOLD);
-        	moveRobotAsync(changeDirection);
+        	boolean forceDetected;
+            if(movementDirectionArr[fsmIndex] == MovementDirection.NORTH || 
+            		movementDirectionArr[fsmIndex] == MovementDirection.SOUTH){
+            	forceDetected = singleDimensionalForceControlCheck(FORCE_STOP_THRESHOLD, 0);
+            }
+            else{
+            	forceDetected = singleDimensionalForceControlCheck(FORCE_STOP_THRESHOLD, 1);
+            }
+        	moveRobotAsync(forceDetected, forceDetected);
         }
 	}
 	
